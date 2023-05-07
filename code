@@ -1,0 +1,40 @@
+import requests
+import telegram
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+
+# Встановлення API ключа бота
+bot = telegram.Bot('API ключ бота')
+
+# Обробка команди /start
+def start(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Привіт! Я можу знайти картинки за ключовими фразами. Просто напиши фразу, яку ти хочеш знайти.")
+
+# Обробка повідомлення з ключовою фразою
+def search_image(update, context):
+    # Отримання тексту повідомлення
+    text = update.message.text
+    # Запит до API Google Images
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {
+        "key": "API ключ Google",
+        "cx": "ID Google Custom Search Engine",
+        "searchType": "image",
+        "q": text
+    }
+    response = requests.get(url, params=params)
+    # Отримання посилання на першу картинку
+    try:
+        image_url = response.json()["items"][0]["link"]
+        # Відправлення повідомлення з картинкою
+        context.bot.send_photo(chat_id=update.effective_chat.id, photo=image_url)
+    except:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="На жаль, не вдалося знайти картинку за цією фразою.")
+
+# Створення об'єкту Updater та додавання обробників
+updater = Updater('API ключ бота', use_context=True)
+updater.dispatcher.add_handler(CommandHandler('start', start))
+updater.dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, search_image))
+
+# Запуск бота
+updater.start_polling()
+updater.idle()
